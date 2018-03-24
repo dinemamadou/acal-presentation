@@ -319,9 +319,9 @@ dp1 %>%
 ---
 #An open can of worms?
 
-##These findings raise more questions than they answer (if they do at all), because a logical question then is, what does it mean for Yorùbá to have long vowels with the H tone since vowel length is not phonemically contrastive?
+##What does it mean for Yorùbá to have long vowels with the H tone since vowel length is not phonemically contrastive?
 ##Can vowel length alone be used as perceptual cue for different levels of pitch?
-##What is the exact status of the L tone and why does is not pattern neither as a "pure" level tone nor as a coutour tone?
+
 
 ---
 #Thanks!!

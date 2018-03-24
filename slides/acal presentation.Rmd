@@ -1,0 +1,327 @@
+---
+title: "Influence of level tones on vowel duration in Yoruba"
+subtitle: " "
+author: "Dine Mamadou"
+date: 'Rutgers University | ACAL 49 | MSU 3/24/18'
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: ["hygge", 
+          "https://www.jvcasillas.com/ru_xaringan/css/rutgers.css", 
+          "https://www.jvcasillas.com/ru_xaringan/css/rutgers-fonts.css"]
+    nature:
+      beforeInit: ["https://www.jvcasillas.com/ru_xaringan/js/ru_xaringan.js"]
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: TRUE
+      ratio: "15:9"
+---
+
+```{r, include=FALSE}
+options(htmltools.dir.version = FALSE)
+```
+
+
+```{r load_library,message=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse)
+library(xaringan)
+library(plot3D)
+library(dbplyr)
+library(readr)
+library(ggfortify)
+
+pitchmodiu <- read_tsv("../data/modiu_Rec.means.tsv")
+pitchyussif <- read_tsv("../data/yussif_Rec.means.tsv")
+dur <- read_tsv("../data/dur.tsv")
+
+```
+# Claim
+## The negative correlation between f0 and vowel duration claimed to be a universal property of tone languages is a parameter instead.  
+--
+
+# Asumptions
+
+## a. There's a correlation between tone and vowel duration
+
+## b. Yoruba High, Mid and Low tones are all level tones, for fairness of comparison
+
+---
+# Cross-linguistic short H and long L
+### In a variety of studies in world languages, H and L level tones have been found to have shortening and lengthening effects on vowel duration, respectively:
+--
+
+###- Acoustic studies: in Standard Thai (Abramson 1962, Gandour 1977), in Mandarin (Dreher & Lee 1966, Chuang 1972), in Chatino (Upson 1968)
+
+
+###- Auditory studies: in Cantonese (Kong 1987), in Tenango Otomi (Blight & Pike 1974), in Kutchin (Scollon 1975), in Yuman langugages (Langdon 1976)
+
+
+###- Articulatory studies: Erikson (1976) found that pitch drops from M to L in Thai was done actively, which takes more time than a simple muscle relaxation (unactive) process
+---
+
+#Gandour's generalizations
+
+###The three types of evidence presented above and the diachronic evidence of long vowels developing from low tones (in Thai) seem to beg for a generalization:
+
+###(a)	'Vowels on low tones are longer than those on high tones,
+--
+
+###(b)	Vowels on rising tones are longer than those on falling tones and,
+###(c)	Vowel duration is inversely related to the approximate average fundamental frequency' [Gandour (1977:60)]
+---
+#...and then Yoruba happened
+
+###While Gandour's generalizations seem to be strongly well-motivated, Yoruba seems to point at the opposite correlation:
+
+
+###Nagano-Madsen (1992:132), in a prose reading task experiment, found vowels in CV words to be 143ms for H, 137ms for M and 139ms for L 
+
+
+###Note that although the duration differences reported in that study are small (and potentially non-significant), they challenge Gandour's generalizations (a) and (c)
+--
+
+###So, I decided to conduct an acoustic experiment in Yoruba in order to be sure and test for significance with a slight modification compared to what Nagano-Madasen (1992) did
+---
+
+# The Experiment
+
+###- Two male participants (both L1 speakers of Yoruba - born in Abeokuta, Nigeria and raised in Lagos, Nigeria)
+--
+
+###- 55 CV words (25 target and 30 fillers) 
+
+###- 2 * vowel (i, u, e, ẹ, e, ọ, a) + tone (H, M, L) + consonant ([t], [k])
+
+###- In the carrier phrase "sọ kpé [...] kí ɱ gbọ́",  ("say [...] for me to hear")
+
+###- Yielding a total of 212 randomized tokens
+---
+
+# Data processing
+
+
+## The collected data was analysed in Praat in the following way:
+--
+
+###- Vowel duration was measured from the onset of F1 to its offset
+
+###- The mean f0 of the middle 1/3 of each vowel was measured
+
+###- Influences from the preceding H tone (of the carrier phrase) were minimized by reporting f0 of target words as ratios of the target tone over that of the preceding H.
+
+###- In other words f0 could only have a value between 0 and 1
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+my_modiupitch <- pitchmodiu %>% 
+  select(., rowLabel, minf0) %>%  
+  separate(rowLabel, into = c("p", "syll", "rep"), sep = "_", remove = F) %>% 
+  separate(., rowLabel, into = c("key1", "key2m"), sep = 3) %>% 
+  separate(., rep, into = c("tone", "rep"), sep = 1) %>%
+  select(., -key1 ) %>% 
+  select(., key2m, p, minf0) %>% 
+  spread(., key = p, value = minf0) %>% 
+  transform(., pitchratiom = p2 / p1) %>% 
+  select(., key2m, pitchratiom) %>% 
+  separate(., key2m, into = c("mkey", "repe"), sep = "_") %>% 
+  separate(., repe, into = c("tone", "rep"), sep = 1) %>% 
+  unite(., "tonetype", c("mkey", "tone")) %>% 
+  spread(., key = rep, value = pitchratiom) %>% 
+  select(., -H1, -H2, -L1, -L2, first = 2, second = 3) %>% 
+  transform(., meanpitchm = (first + second) / 2)
+```
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+mpitch <- my_modiupitch[c(-1,-14,-15,-16,-30),] %>% 
+    select(., tonetype, p1 = meanpitchm)
+```
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+##Yussif pitch data
+my_yussifpitch <- pitchyussif %>% 
+select(., rowLabel, minf0) %>%
+  separate(rowLabel, into = c("p", "syll", "rep"), sep = "_", remove = F) %>% 
+  separate(., rowLabel, into = c("key1", "key2y"), sep = 3) %>% 
+  separate(., rep, into = c("tone", "rep"), sep = 1) %>%
+  select(., -key1 ) %>% 
+  select(., key2y, p, minf0) %>% 
+  spread(., key = p, value = minf0) %>% 
+  transform(., pitchratioy = p2 / p1) %>% 
+  select(., key2y, pitchratioy) %>% 
+  separate(., key2y, into = c("mkey", "repe"), sep = "_") %>% 
+  separate(., repe, into = c("tone", "rep"), sep = 1) %>% 
+  unite(., "tonetype", c("mkey", "tone")) %>% 
+  spread(., key = rep, value = pitchratioy) %>% 
+  select(., tonetype, -H1, -H2, -L1, -L2, first = 2, second = 3) %>% 
+  transform(., meanpitchy = (first + second) / 2)
+```
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+ypitch <- my_yussifpitch[c(-1,-14,-15,-16,-29),]
+```
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+ypitchy <- ypitch %>%  
+select(., tonetype, p2 = meanpitchy) 
+```
+
+```{r , message=FALSE, warning=FALSE, include=FALSE}
+##Mean pitch/p1/p2
+pitch_p1_p2 <- left_join(mpitch, ypitchy, by = "tonetype")
+
+p <- as.data.frame(pitch_p1_p2)
+p[is.na(p)] <- 0.879 
+
+pitch <- p %>% 
+  select(., words = tonetype, pitch_m = p1, pitch_y = p2) 
+```
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+##plot tone participant by pitch
+meanp <- pitch %>% 
+  transform(., mean_t_pitch = (pitch_m + pitch_y)/2) %>% 
+  select(., -pitch_m, -pitch_y) %>%
+  separate(., words, into = c("syll", "tone"), remove = FALSE) %>%
+  select(., -syll)
+```
+
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+##Extra
+meanpp <- meanp %>%
+  select(., -tone)
+```
+
+```{r , message=FALSE, warning=FALSE, include=FALSE}
+# Vowel duration
+dur_p1_p2 <- dur %>% 
+  separate(., word, into = c("word", "rep")) %>% 
+  separate(., rep, into = c("tone", "rep"), sep = 1) %>% 
+  unite(., "words", c("word", "tone")) %>% 
+  gather(., key = participant, value = duration, -words, -rep) %>% 
+  spread(., key = rep, value = duration) %>% 
+  select(., words, participant, first = 3, second = 4) %>% 
+  transform(., meandur = (first + second)/2) %>% 
+  select(., -first, -second) %>% 
+  separate(., words, into = c("word", "tone"), remove = FALSE) %>% 
+  select(., -word)  
+
+```
+
+```{r , message=FALSE, warning=FALSE, include=FALSE}
+##plot tone participant by vowel duration
+meand <- dur_p1_p2 %>% 
+  spread(., key = participant, value = meandur) %>% 
+  transform(., mean_v_duration = (dur_m + dur_y)/2) %>% 
+  select(., -dur_m, -dur_y)
+```
+
+```{r , message=FALSE, warning=FALSE, include=FALSE, fig.width=10, fig.retina=2, echo=FALSE}
+#All together Duration vs Pitch
+dp1 <- left_join(meand, meanpp, by = "words") %>%
+  separate(., words, into = c("syllable", "t")) %>%
+  separate(., syllable, into = c("consonant", "vowel"), sep = 1) %>%
+  select(., -t)
+```
+
+
+```{r , message=FALSE, warning=FALSE, include=FALSE, fig.width=10, fig.retina=2, echo=FALSE}
+mod_0 <- lm(mean_v_duration ~ 1, data = dp1)
+summary(mod_0)
+```
+
+```{r , message=FALSE, warning=FALSE, include=FALSE, fig.width=10, fig.retina=2, echo=FALSE}
+mod_1 <- lm(mean_v_duration ~ mean_t_pitch, data = dp1)
+  summary(mod_1)
+```
+
+```{r , message=FALSE, warning=FALSE, include=FALSE, fig.width=10, fig.retina=2, echo=FALSE}
+mod_2 <- lm(mean_v_duration ~ mean_t_pitch + vowel, data = dp1)
+  summary(mod_2)
+```
+
+```{r , message=FALSE, warning=FALSE, include=FALSE, fig.width=10, fig.retina=2, echo=FALSE}
+mod_3 <- lm(mean_v_duration ~ mean_t_pitch:vowel, data = dp1)
+  summary(mod_3)
+```
+
+```{r , message=FALSE, warning=FALSE, include=FALSE, fig.width=10, fig.retina=2, echo=FALSE} 
+mod_4 <- lm(mean_v_duration ~ mean_t_pitch:consonant, data = dp1)
+  summary(mod_4)
+```
+
+```{r , message=FALSE, warning=FALSE, include=FALSE, fig.width=10, fig.retina=2, echo=FALSE}
+mod_5 <- lm(mean_v_duration ~ tone, data = dp1)
+  summary(mod_5)
+```
+
+```{r , message=FALSE, warning=FALSE, include=FALSE, fig.width=10, fig.retina=2, echo=FALSE}
+anova(mod_0, mod_1, mod_2, mod_3, mod_4, mod_5)
+
+```
+
+```{r, echo=FALSE, include=FALSE}
+
+```
+---
+# Results/Descriptive Stats
+
+```{r , message=FALSE, warning=FALSE, include=TRUE, fig.width=4, fig.retina=2, echo=FALSE}
+dp1 %>%
+  group_by(., tone) %>%
+  summarize(., mean_dura = mean(mean_v_duration), sd_dura = sd(mean_v_duration), 
+            mean_pi = mean(mean_t_pitch), sd_pi = sd(mean_t_pitch)) %>%
+  knitr::kable(., format = "html", digits = 2)
+
+```
+
+
+###- Vowel duration:  127ms for H, 123ms for M and 97ms for L
+###- The H tone has the largest SD which could be indicative of outliers and/or more variability in their duration
+
+---
+# The Scatterplot
+
+.pull-left[
+```{r , message=FALSE, warning=FALSE, include=TRUE, fig.width=10, fig.height=8, fig.retina=2, echo=FALSE}
+##plot with mid
+dp1 %>%
+  ggplot(., aes(x = mean_v_duration, y = mean_t_pitch, 
+                color = tone, label = vowel)) +
+  geom_point() +
+  geom_label()
+```
+]
+
+.pull-right[
+###* The scatterplot represents the mean vowel durations in _ms_ (accross speaker, repetitions and tone) by the mean pitch
+###* The L-toned vowels are in the lower left quadrant of the plot while the H-toned ones cluster in the upper right quadrant
+]
+
+---
+# The Model
+##A general linear model was used to analyze vowel duration as a function of pitch:
+##- Main effects and the pitch by vowel quality and consonant type interaction were assessed using the nested model comparison with the alpha set at 0.05
+##- There was a main effect of pitch (F(1) = 15.93, p < 0.05) [p<0.00134 to be exact]
+
+---
+#The Model
+##- The model containing pitch provided the best fit of the data (R^2 = 0.37)
+##- Vowel duration increases as a function of pitch
+##- That is, duration showed an increase of approximately 127 _ms_ +/- 34.79 se (t = 3.65, p < 0.05) per 0.1 _Hz_(ratio)
+##So the difference in vowel duration as a function of pitch was not due to chance and in fact, the significance 
+
+---
+#In conclusion
+##- The data discussed confirmed that there is in fact a correlation between tone and vowel duration
+##- But counter Gandour's generalization, the Yoruba data provided evidence for a positively correlated f0 and vowel duration
+##- SOOOOO at best, the correlation between vowel duration and f0 is a UG property but the direction of this correlation must be parameter setting   
+  
+---
+#An open can of worms?
+
+##These findings raise more questions than they answer (if they do at all), because a logical question then is, what does it mean for Yorùbá to have long vowels with the H tone since vowel length is not phonemically contrastive?
+##Can vowel length alone be used as perceptual cue for different levels of pitch?
+##What is the exact status of the L tone and why does is not pattern neither as a "pure" level tone nor as a coutour tone?
+
+---
+#Thanks!!
